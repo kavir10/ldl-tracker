@@ -32,9 +32,12 @@ export interface DailyLog {
 
 export type Logs = Record<string, DailyLog>;
 
+// A fresh day must start EMPTY: previously this preselected fiber, nuts,
+// and plant protein, so editing any single field persisted several
+// unconfirmed habits as completed and inflated the LDL projection.
 export const emptyLog = (): DailyLog => ({
-  satFatSlips: 0, muesli45g: true, isabgolTsp: 1, fiberSabzi: true, fruit: true,
-  almondsG: 10, cashewsG: 12, dalKatori: 1, soyaChunks: false, tofu: false,
+  satFatSlips: 0, muesli45g: false, isabgolTsp: 0, fiberSabzi: false, fruit: false,
+  almondsG: 0, cashewsG: 0, dalKatori: 0, soyaChunks: false, tofu: false,
   soyMilkGlasses: 0, sterolsG: 0, walkMinutes: 0, strength: false, foods: {},
 });
 
@@ -108,11 +111,14 @@ export const overallAdherence = (drop: number) => Math.min(drop, DROP_CAP) / DRO
 
 export function rollingAverageDrop(endDateKey: string, logs: Logs, days: number): number {
   const end = new Date(`${endDateKey}T12:00:00`);
-  const drops: number[] = [];
+  let total = 0;
   for (let offset = days - 1; offset >= 0; offset--) {
     const date = new Date(end); date.setDate(end.getDate() - offset);
     const key = localDateKey(date); const log = logs[key];
-    if (log) drops.push(dailyDrop(leverAdherence(key, log, logs)));
+    // Days with no log count as zero adherence - previously they were
+    // dropped from the divisor, so one logged day could present as a
+    // full week of adherence.
+    if (log) total += dailyDrop(leverAdherence(key, log, logs));
   }
-  return drops.length ? drops.reduce((a, b) => a + b, 0) / drops.length : 0;
+  return total / days;
 }
