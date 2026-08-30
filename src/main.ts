@@ -1,5 +1,6 @@
 import './style.css';
 import { dailyDrop, emptyLog, fiberGrams, leverAdherence, localDateKey, MAX_DROPS, mondayOf, nutsAdherence, overallAdherence, plantProteinGrams, projectedLDL, rollingAverageDrop, STARTING_LDL, type DailyLog, type Lever, type Logs } from './scoring';
+import { clampedInputValue } from './numeric';
 
 const STORAGE_KEY = 'ldl-tracker:v1';
 const app = document.querySelector<HTMLDivElement>('#app')!;
@@ -57,6 +58,7 @@ function header(){return `<header><div class="brand"><span>LDL</span> DAILY</div
 function nav(){return `<nav><button data-view="dashboard" class="${view==='dashboard'?'active':''}"><span>◫</span>Dashboard</button><button data-view="log" class="${view==='log'?'active':''}"><span>＋</span>Daily log</button></nav>`;}
 function setPath(obj:any,path:string,value:any){const parts=path.split('.');let cur=obj;for(let i=0;i<parts.length-1;i++)cur=cur[parts[i]]??={};cur[parts.at(-1)!]=value;}
 function update(field:string,value:any){if(!logs[selected])logs[selected]=emptyLog();setPath(logs[selected],field,value);save();render();}
-function bind(){document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>b.onclick=()=>{view=b.dataset.view as any;render();});document.querySelector<HTMLInputElement>('#date')?.addEventListener('change',e=>{selected=(e.target as HTMLInputElement).value;render();});document.querySelectorAll<HTMLInputElement>('[data-field]').forEach(i=>i.onchange=()=>update(i.dataset.field!,i.checked));document.querySelectorAll<HTMLInputElement>('[data-number]').forEach(i=>i.onchange=()=>update(i.dataset.number!,Number(i.value)||0));document.querySelectorAll<HTMLButtonElement>('[data-step]').forEach(b=>b.onclick=()=>{const input=document.querySelector<HTMLInputElement>(`[data-number="${b.dataset.step}"]`)!;update(b.dataset.step!,Math.max(Number(input.min)||0,Number(input.value)+Number(b.dataset.delta)));});}
+function numericValue(input: HTMLInputElement): number { return clampedInputValue(input.value,input.min); }
+function bind(){document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>b.onclick=()=>{view=b.dataset.view as any;render();});document.querySelector<HTMLInputElement>('#date')?.addEventListener('change',e=>{selected=(e.target as HTMLInputElement).value;render();});document.querySelectorAll<HTMLInputElement>('[data-field]').forEach(i=>i.onchange=()=>update(i.dataset.field!,i.checked));document.querySelectorAll<HTMLInputElement>('[data-number]').forEach(i=>i.onchange=()=>update(i.dataset.number!,numericValue(i)));document.querySelectorAll<HTMLButtonElement>('[data-step]').forEach(b=>b.onclick=()=>{const input=document.querySelector<HTMLInputElement>(`[data-number="${b.dataset.step}"]`)!;update(b.dataset.step!,Math.max(Number(input.min)||0,numericValue(input)+Number(b.dataset.delta)));});}
 function render(){view==='dashboard'?renderDashboard():renderLog();}
 render();
